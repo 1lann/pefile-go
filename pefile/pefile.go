@@ -66,7 +66,7 @@ func main() {
 		fmt.Println("\nDIRECTORY_ENTRY_EXPORT\n")
 		fmt.Println(pefile.ExportDirectory)
 		for _, entry := range pefile.ExportDirectory.Exports {
-			fmt.Printf("%d: %s:0x%x, forward: %s\n", entry.Ordinal, string(entry.Name), entry.Address, entry.Forwarder)
+			fmt.Printf("%d: %s:0x%x, 0x%x, forward: %s\n", entry.Ordinal, string(entry.Name), entry.Address, entry.AddressOffset, entry.Forwarder)
 		}
 	}
 

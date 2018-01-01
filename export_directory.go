@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	//"reflect"
-	"log"
 )
 
 /* Parse the export directory.
@@ -35,7 +34,6 @@ func (pe *PEFile) parseExportDirectory(rva, size uint32) (err error) {
 		return err
 	}
 	if length < lenAddrOfFuncs {
-		log.Printf("AddressOfFunctions would extend past the section end")
 		return fmt.Errorf("AddressOfFunctions would extend past the section end")
 	}
 
@@ -62,9 +60,6 @@ func (pe *PEFile) parseExportDirectory(rva, size uint32) (err error) {
 				return err
 			}
 			e.Forwarder, err = pe.readStringRVA(e.Address)
-			if err != nil {
-				log.Printf("%s", err.Error())
-			}
 		}
 	}
 
@@ -93,7 +88,6 @@ func (pe *PEFile) parseExportDirectory(rva, size uint32) (err error) {
 		}
 		name, err := pe.readStringRVA(nameAddr)
 		if err != nil {
-			log.Println("Error reading symbol name", err)
 			break
 		}
 
@@ -105,8 +99,6 @@ func (pe *PEFile) parseExportDirectory(rva, size uint32) (err error) {
 		}
 
 		if uint32(ordinalIndex) > exportDir.Data.NumberOfFunctions {
-			ordinal := ordinalIndex + uint16(exportDir.Data.Base)
-			log.Println("Invalid ordinal index/ordinal", ordinalIndex, "/", ordinal, " for ", name)
 			e := ExportData{
 				NameOffset:    nameOffset,
 				Name:          name,

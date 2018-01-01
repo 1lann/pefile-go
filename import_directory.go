@@ -5,7 +5,6 @@ package pefile
 import (
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 )
 
@@ -40,12 +39,10 @@ func (pe *PEFile) parseImportDirectory(rva, size uint32) error {
 
 		importDesc.Dll, err = pe.readStringRVA(importDesc.Data.Name)
 		if err != nil {
-			log.Println("Error reading import name", err)
 			importDesc.Dll = invalidImportName
 		} else if !isValidDosFilename(importDesc.Dll) {
 			importDesc.Dll = invalidImportName
 		}
-		log.Printf("Import descriptor name rva 0x%x: %s", importDesc.Data.Name, importDesc.Dll)
 
 		if pe.OptionalHeader64 != nil {
 			if err := pe.parseImports64(&importDesc); err != nil {
@@ -87,16 +84,9 @@ func (pe *PEFile) parseImports(importDesc *ImportDescriptor) (err error) {
 	var table, ilt, iat []ThunkData
 	if importDesc.Data.Characteristics > 0 {
 		ilt, err = pe.getImportTable(importDesc.Data.Characteristics, importDesc)
-		if err != nil {
-			log.Println("ILT (ImportDescriptor.Characteristics) parse error", err)
-		}
 	}
 	if importDesc.Data.FirstThunk > 0 {
 		iat, err = pe.getImportTable(importDesc.Data.FirstThunk, importDesc)
-		if err != nil {
-			log.Println("IAT (ImportDescriptor.FirstThunk) parse error", err)
-			//return err
-		}
 	}
 
 	//log.Println(ilt, iat, table)
@@ -137,7 +127,6 @@ func (pe *PEFile) parseImports(importDesc *ImportDescriptor) (err error) {
 
 				imp.Name, err = pe.readStringRVA(table[idx].Data.AddressOfData + 2)
 				if err != nil {
-					log.Println("Error reading import name", err)
 					imp.Name = invalidImportName
 				} else if !isValidFuncName(imp.Name) {
 					imp.Name = invalidImportName
@@ -212,7 +201,6 @@ func (pe *PEFile) getImportTable(startRVA uint32, importDesc *ImportDescriptor) 
 
 	for rva := startRVA; rva < lastAddr; {
 		if rva >= lastAddr {
-			log.Println("Error parsing the import table. Entries go beyond bounds.")
 			break
 		}
 		// if we see too many times the same entry we assume it could be
@@ -235,7 +223,6 @@ func (pe *PEFile) getImportTable(startRVA uint32, importDesc *ImportDescriptor) 
 		thunk := newThunkData(thunkOffset)
 		if err := pe.readOffset(&thunk.Data, thunk.FileOffset); err != nil {
 			msg := fmt.Sprintf("Error Parsing the import table.\nInvalid data at RVA: 0x%x", rva)
-			log.Println(msg)
 			return nil, errors.New(msg)
 		}
 
@@ -249,9 +236,6 @@ func (pe *PEFile) getImportTable(startRVA uint32, importDesc *ImportDescriptor) 
 		// Seen in PE with SHA256:
 		// 5945bb6f0ac879ddf61b1c284f3b8d20c06b228e75ae4f571fa87f5b9512902c
 		if thunk.Data.AddressOfData >= startRVA && thunk.Data.AddressOfData <= rva {
-			log.Printf("Error parsing the import table. "+
-				"AddressOfData overlaps with THUNK_DATA for THUNK at:\n  "+
-				"RVA 0x%x", rva)
 			break
 		}
 
@@ -262,7 +246,6 @@ func (pe *PEFile) getImportTable(startRVA uint32, importDesc *ImportDescriptor) 
 				// corrupted and ignore it altogether
 				if thunk.Data.AddressOfData&uint32(0x7fffffff) > uint32(0xffff) {
 					msg := fmt.Sprintf("Corruption detected in thunk data at 0x%x", rva)
-					log.Printf(msg)
 					return nil, errors.New(msg)
 				}
 				// and if it looks like it should be an RVA
