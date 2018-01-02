@@ -46,6 +46,8 @@ func NewPEFile(filename string) (pe *PEFile, err error) {
 		return nil, err
 	}
 
+	defer pe.data.Unmap()
+
 	pe.dataLen = uint32(len(pe.data))
 
 	pe.DosHeader = newDosHeader(uint32(0x0))
