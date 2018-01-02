@@ -46,8 +46,6 @@ func NewPEFile(filename string) (pe *PEFile, err error) {
 		return nil, err
 	}
 
-	defer pe.data.Unmap()
-
 	pe.dataLen = uint32(len(pe.data))
 
 	pe.DosHeader = newDosHeader(uint32(0x0))
@@ -177,6 +175,12 @@ func NewPEFile(filename string) (pe *PEFile, err error) {
 	}*/
 
 	return pe, nil
+}
+
+// Close unmaps the memory mapped DLL file. Any structure retrievals after
+// calling Close are invalidated.
+func (pe *PEFile) Close() error {
+	return pe.data.Unmap()
 }
 
 // ByVAddr is a helper for sorting sections by VirtualAddress
